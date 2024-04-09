@@ -3,6 +3,7 @@ package view;
 import control.Mouse;
 import control.TimeControl;
 import main.Main;
+import model.BoardHelper;
 import model.Piece;
 import model.Board;
 
@@ -12,6 +13,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Stack;
 
 public class MainPanel extends JPanel implements Runnable{
 
@@ -36,7 +39,7 @@ public class MainPanel extends JPanel implements Runnable{
     private Thread game;
 
     int FPS=60;
-    private boolean running;
+    public boolean running;
 
     Mouse mouse;
 
@@ -48,6 +51,9 @@ public class MainPanel extends JPanel implements Runnable{
 
     private boolean start;
 
+    public BoardHelper boardHelper;
+
+    public ArrayList<Piece> dudoan;
     Main main;
 
     public MainPanel(Main jf){
@@ -55,6 +61,9 @@ public class MainPanel extends JPanel implements Runnable{
         setPreferredSize(new Dimension(BOARD_WIDTH, BOARD_HEIGHT));
         setBackground(new Color(160,160,160));
         board = new Board();
+        dudoan = new ArrayList<>();
+        boardHelper = new BoardHelper(board.getBoard(),dudoan);
+        dudoan= boardHelper.dudoanvitri(board.getBoard(), 1);
         mouse= new Mouse(board, this, main);
         start = true;
         timeWhite = new TimeControl();
@@ -66,15 +75,21 @@ public class MainPanel extends JPanel implements Runnable{
     }
 
     public void update(){
+
         if(board.isGameOn()&& board.isGameContinue()) {
             int col = getPoint(mouse.mx);
             int row = getPoint(mouse.my);
             if (row <= Board.ROWS && col <= Board.COLS) {
                 if (mouse.pressed) {
                     board.update(row, col);
+                    boardHelper= new BoardHelper(board.getBoard(), new ArrayList<>());
+                    int value=0;
+                    if(board.isBlack) value = 1;
+                    if (board.isWhite) value= 2;
+                    dudoan = boardHelper.dudoanvitri(board.getBoard(), value);
                     mouse.pressed = false;
                     if (board.WhiteContinue) timeWhite.setStartTime(System.nanoTime());
-                    board.printBoard();
+                    //board.printBoard();
                 }
             }
             timeBlack.timeRun(board.isBlack);
@@ -112,6 +127,17 @@ public class MainPanel extends JPanel implements Runnable{
                 g.fillOval(getTileX(j)+2, getTileY(i)+2, SQUARE_SIZE-5, SQUARE_SIZE-5);
             }
         }
+
+        //ve du doan
+        int value=0;
+        if(board.isBlack){
+            value=1;
+        }else if(board.isWhite) value=2;
+        for (Piece piece: dudoan){
+            g.setColor(Color.BLUE);
+            g.fillRoundRect(getTileX(piece.getCol()), getTileY(piece.getRow()), SQUARE_SIZE, SQUARE_SIZE, ARC, ARC);
+        }
+
 
         //ve thoi gian
         try {
